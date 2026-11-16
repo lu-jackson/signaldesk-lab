@@ -7,7 +7,7 @@
 
 | # | 命令（工作目錄） | exit code | 結果 |
 |---|---|---|---|
-| 1 | `python -m pytest tests -q`（`backend/`，venv python） | 0 | **89 passed** in 22.86 s |
+| 1 | `python -m pytest tests -q`（`backend/`，venv python） | 0 | **91 passed** in 11.88 s |
 | 2 | `npm run typecheck`（`frontend/`，= `tsc --noEmit`，TypeScript 7.0.2） | 0 | 無錯誤 |
 | 3 | `npm run build`（`frontend/`，tsc + vite 8.3.8） | 0 | built，29 modules，JS 275 kB（gzip 84 kB） |
 | 4 | `python -m pytest e2e -q -p no:cacheprovider`（repo 根目錄） | 0 | **4 passed** in 13.71 s |
@@ -61,8 +61,9 @@ promotion  [ 0, 0, 4, 0, 0]
 complaint  [ 0, 0, 0, 7, 1]
 other      [ 1, 0, 0, 0, 9]
 ```
-- 兩個失誤：`e32`「想找人聊聊咖啡豆烘焙的差異」被「想找」關鍵字誤判為 seeking；`e34`「房東說押金不退，我要報警處理」規則沒有「報警」以外的抱怨詞命中前就落入 other（抱怨詞表缺口）。**沒有為了提高分數而針對 fixtures 調整規則。**
+- 兩個失誤：`e32`「想找人聊聊咖啡豆烘焙的差異」被「想找」關鍵字誤判為 seeking；`e34`「補習班說不退費，我要報警處理」沒有命中抱怨詞表就落入 other（詞表缺口）。**沒有為了提高分數而針對 fixtures 調整規則。**
 - 零分母一律回 `None`（顯示 n/a），不當作 0 或 1（`test_eval_report_zero_denominator_safe`）。
+- 品牌換成 moreti.app 的多益與電子筆記後，fixtures 是以原句型平行改寫，所以結果與之前相同；這也代表它**不是**對新領域的獨立驗證。
 - 限制：36 筆是作者自己寫的合成句子，與規則同源於同一個人的語感，**這個分數不代表真實世界表現**，也不代表商業成效。
 
 ## 未驗證（如實列出）

@@ -13,7 +13,7 @@ signaldesk-lab/
 │  │  ├─ routers/           core / content / ops / agent  （HTTP 薄層，無商業邏輯）
 │  │  ├─ services/          pipeline, drafts, delivery, jobs, automations, leads, tracking, ledger, agent, catalog, settings（所有規則在這裡）
 │  │  └─ providers/         base（介面）, ai_demo, ai_anthropic, social（Demo/Threads 唯讀/模擬投遞）
-│  ├─ tests/ (89)   eval/（36 筆人工標註 + 評估腳本）
+│  ├─ tests/ (91)   eval/（36 筆人工標註 + 評估腳本）
 │  └─ requirements.txt / requirements.lock.txt
 ├─ frontend/src/            React 19 + TS：api.ts（fetch + useApi）、ui.tsx、App.tsx、pages/*（11 頁）
 ├─ e2e/                     Playwright（pytest）

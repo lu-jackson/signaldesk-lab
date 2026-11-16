@@ -58,8 +58,8 @@ export default function Automations() {
         <div className="small muted">先以 event_id 去重落地，再排工作。同一 event_id 再送一次，會得到相同的「已接受」結果但不會重複投遞。</div>
         <div className="row">
           <label>event_id<input data-testid="evt-id" value={eid} onChange={(e) => setEid(e.target.value)} /></label>
-          <label>留言內容（貼到 own_rent_1）<input data-testid="evt-text" value={text} onChange={(e) => setText(e.target.value)} /></label>
-          <ActionButton kind="primary" testid="evt-send" onClick={async () => { setLast(await post<Rec>("/api/simulator/events", { event_id: eid, post_id: "own_rent_1", author_handle: "demo_tester", text })); refresh(); }}>注入事件</ActionButton>
+          <label>留言內容（貼到 own_toeic_1）<input data-testid="evt-text" value={text} onChange={(e) => setText(e.target.value)} /></label>
+          <ActionButton kind="primary" testid="evt-send" onClick={async () => { setLast(await post<Rec>("/api/simulator/events", { event_id: eid, post_id: "own_toeic_1", author_handle: "demo_tester", text })); refresh(); }}>注入事件</ActionButton>
         </div>
         {last && <Notice><span data-testid="evt-result">accepted={String(last.accepted)}・duplicate={String(last.duplicate)}・事件狀態 {last.event_status}</span></Notice>}
         <h3>失敗注入（下一次投遞的模擬結果）</h3>

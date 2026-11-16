@@ -10,7 +10,7 @@
 - Agent 邊界：工具白名單、參數驗證、回合／工具上限、寫入只能提案且需 UI 確認、外部文字視為不可信資料。
 - Demo 與 Live 共用介面、並如實標示：沒有金鑰也能完成全部流程。
 - 小型合成資料評估（36 筆）與如何誠實報告（混淆矩陣、零分母處理、失誤列表）。
-- 測試：89 個後端測試、4 個瀏覽器 E2E、typecheck/build；測試用臨時 DB 與可凍結時鐘。
+- 測試：91 個後端測試、4 個瀏覽器 E2E、typecheck/build；測試用臨時 DB 與可凍結時鐘。
 
 ## 不可聲稱的
 - ❌ 「使用了 LLM／AI 判斷」——Demo 模式是關鍵詞規則與模板；助手是 scripted planner。Live 模式**從未對真實 API 測過**。
@@ -29,7 +29,7 @@
 - Demo 規則透明但粗糙；Live 彈性高但有成本與不確定性——所以兩者分開、不自動降級。
 
 ## 測試結果摘要
-後端 89 passed；前端 `tsc --noEmit` 與 `vite build` exit 0；Playwright 4 passed（Edge）；分類 eval 意圖 accuracy 0.944（n=36，僅供學習）。未驗證項目見 KNOWN_LIMITATIONS。
+後端 91 passed；前端 `tsc --noEmit` 與 `vite build` exit 0；Playwright 4 passed（Edge）；分類 eval 意圖 accuracy 0.944（n=36，僅供學習）。未驗證項目見 KNOWN_LIMITATIONS。
 
 ## 個人學習紀錄模板（自己填）
 ```

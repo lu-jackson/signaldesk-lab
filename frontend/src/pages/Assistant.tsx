@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useApi, post, type Rec } from "../api";
 import { ActionButton, Async, Badge, Card, Notice } from "../ui";
 
-const EXAMPLE = "搜尋最近七天需要台北租屋協助的 Demo 貼文，排除仲介廣告，替前三篇準備回覆，但不要送出。";
+const EXAMPLE = "搜尋最近七天需要多益備考協助的 Demo 貼文，排除補習班廣告，替前三篇準備回覆，但不要送出。";
 
 function Trace({ id }: { id: string }) {
   const t = useApi<Rec>(`/api/agent/sessions/${id}`);

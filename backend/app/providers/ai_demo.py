@@ -220,7 +220,8 @@ def _plan(messages: list[dict]) -> AgentTurn:
     days = _num(m.group(1)) if m else (7 if "一週" in goal or "一周" in goal else chosen.get("window_days", 7))
     mt = re.search(r"前\s*(\d+|[一二兩三四五六七八九十])\s*篇", goal)
     want = _num(mt.group(1)) if mt else 3
-    extra = ["仲介"] if "仲介" in goal else []
+    mx = re.search(r"排除\s*([^，,。\s]{1,8}?)廣告", goal)
+    extra = [mx.group(1)] if mx else []
     if "get_brand" not in res:
         return turn(f"{tag}讀取品牌設定。", call("get_brand", brand_id=chosen["brand_id"]))
     if "search_demo_posts" not in res:

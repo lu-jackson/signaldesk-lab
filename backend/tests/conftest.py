@@ -64,7 +64,7 @@ def run_worker(conn, n=50, advance_seconds=0):
     return done
 
 
-def first_seeking_draft(client, project="proj_rent"):
+def first_seeking_draft(client, project="proj_toeic"):
     """跑一次專案並回傳第一份草稿。"""
     run = client.post(f"/api/projects/{project}/run-now?sync=true").json()["run"]
     ds = client.get(f"/api/drafts?project_id={project}").json()["items"]

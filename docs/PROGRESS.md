@@ -9,10 +9,10 @@
 | M2 事件、工作、去重、失敗注入、名單與匯出 | ✅ | `services/jobs.py`、`delivery.py`、`automations.py`、`leads.py`、`worker.py`；`tests/test_delivery_jobs.py`（15）、`tests/test_leads_tracking.py`。 |
 | M3 追蹤連結、分析、PR、排程、用量帳本 | ✅ | `services/tracking.py`、`ledger.py`、`worker.schedule_tick`；PR 頁＝`/api/evaluations?risk=`。 |
 | M4 助手、Anthropic adapter、Threads 唯讀 | ✅ | `services/agent.py`、`providers/ai_anthropic.py`、`providers/social.py`；`tests/test_agent.py`（mocked tool-use）、`tests/test_misc.py`（Threads MockTransport）。**Live 皆未對真實服務驗證。** |
-| M5 回歸、E2E、文件、學習導讀 | ✅ | pytest 89 passed；前端 typecheck/build exit 0；Playwright E2E 4 passed；本資料夾所有文件。 |
+| M5 回歸、E2E、文件、學習導讀 | ✅ | pytest 91 passed；前端 typecheck/build exit 0；Playwright E2E 4 passed；本資料夾所有文件。 |
 
 ## 已驗證
-- 後端 89 個 pytest、前端 `tsc --noEmit` 與 `vite build`、4 個 Playwright 瀏覽器測試（Edge channel）。
+- 後端 91 個 pytest、前端 `tsc --noEmit` 與 `vite build`、4 個 Playwright 瀏覽器測試（Edge channel）。
 - 真的以 `python scripts/launcher.py start` 啟動，確認 `/api/health`（worker alive）、首頁 200、儀表板 API。
 
 ## 尚未驗證／阻塞

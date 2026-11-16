@@ -22,7 +22,7 @@ def test_flow1_brand_to_simulated_send(page):
 
     # 1. 建立品牌
     goto(page, "brands")
-    name = f"E2E 租屋品牌 {uuid.uuid4().hex[:4]}"
+    name = f"E2E 多益品牌 {uuid.uuid4().hex[:4]}"
     page.get_by_test_id("brand-name").last.fill(name)
     page.get_by_test_id("brand-facts").last.fill("E2E 可確認事實：我們提供看房陪同。")
     page.get_by_test_id("brand-cta").last.fill("歡迎私訊。")
@@ -33,8 +33,8 @@ def test_flow1_brand_to_simulated_send(page):
     goto(page, "projects")
     page.get_by_test_id("proj-name").last.fill("E2E 專案")
     page.get_by_test_id("proj-brand").last.select_option(label=name)
-    page.get_by_test_id("proj-keywords").last.fill("租屋")
-    page.get_by_test_id("proj-exclude").last.fill("仲介, 【出租】, 歡迎洽詢")
+    page.get_by_test_id("proj-keywords").last.fill("多益")
+    page.get_by_test_id("proj-exclude").last.fill("補習班, 【招生】, 歡迎洽詢")
     page.get_by_test_id("proj-save").last.click()
     card = page.locator("section.card", has_text="E2E 專案").first
     expect(card).to_be_visible()

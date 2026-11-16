@@ -10,7 +10,7 @@ from app.services import jobs
 from tests.conftest import run_worker
 
 
-def event(client, eid, text="請給我清單", post="own_rent_1"):
+def event(client, eid, text="請給我清單", post="own_toeic_1"):
     return client.post("/api/simulator/events", json={"event_id": eid, "post_id": post, "author_handle": "demo_tester", "text": text})
 
 
@@ -19,7 +19,7 @@ def attempts(conn, cid):
 
 
 def test_preview_sends_nothing(client, conn):
-    p = client.post("/api/automations/rule_rent_list/preview").json()
+    p = client.post("/api/automations/rule_toeic_list/preview").json()
     assert p["matching"] > 0 and p["note"].startswith("預覽")
     assert conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 0
     assert conn.execute("SELECT COUNT(*) FROM delivery_attempts").fetchone()[0] == 0
@@ -69,10 +69,10 @@ def test_workflow_version_change_does_not_resend(client, conn):
 
 
 def test_process_existing_is_idempotent(client, conn):
-    n1 = client.post("/api/automations/rule_rent_list/process-existing").json()["matched_comments"]
+    n1 = client.post("/api/automations/rule_toeic_list/process-existing").json()["matched_comments"]
     run_worker(conn, n=500)
     sent1 = conn.execute("SELECT COUNT(*) FROM delivery_attempts").fetchone()[0]
-    client.post("/api/automations/rule_rent_list/process-existing")
+    client.post("/api/automations/rule_toeic_list/process-existing")
     run_worker(conn, n=500)
     assert conn.execute("SELECT COUNT(*) FROM delivery_attempts").fetchone()[0] == sent1 == n1 * 2
 
@@ -136,7 +136,7 @@ def test_unknown_outcome_stops_and_reconciles(client, conn):
 
 
 def test_worker_crash_lease_recovery(conn):
-    safe = jobs.enqueue(conn, "run_project", {"project_id": "proj_course"})
+    safe = jobs.enqueue(conn, "run_project", {"project_id": "proj_notes"})
     risky = jobs.enqueue(conn, "send_draft", {"draft_id": "x"}, side_effect=True)
     jobs.claim(conn, "w1")
     jobs.claim(conn, "w1")   # 兩個都被 w1 claim 後 w1「當掉」
@@ -149,14 +149,14 @@ def test_worker_crash_lease_recovery(conn):
 
 
 def test_claim_is_atomic_single_winner(conn):
-    jobs.enqueue(conn, "run_project", {"project_id": "proj_rent"})
+    jobs.enqueue(conn, "run_project", {"project_id": "proj_toeic"})
     a = jobs.claim(conn, "w1")
     b = jobs.claim(conn, "w2")
     assert a and b is None
 
 
 def test_cancel_partial_keeps_results(client, conn):
-    n = client.post("/api/automations/rule_rent_list/process-existing").json()["matched_comments"]
+    n = client.post("/api/automations/rule_toeic_list/process-existing").json()["matched_comments"]
     assert n >= 3
     run_worker(conn, n=2)  # 只做兩個工作
     done = conn.execute("SELECT COUNT(*) FROM delivery_attempts").fetchone()[0]
@@ -170,26 +170,26 @@ def test_cancel_partial_keeps_results(client, conn):
 
 
 def test_schedule_tick_enqueues_once_and_run_now_independent(client, conn):
-    p = client.get("/api/projects/proj_course").json()
+    p = client.get("/api/projects/proj_notes").json()
     body = {k: p[k] for k in ("name", "brand_id", "account_id", "purpose", "keywords", "must_terms", "exclude_terms", "window_days", "mode", "daily_limit", "interval_seconds", "enabled")}
-    client.put("/api/projects/proj_course", json={**body, "schedule_enabled": True, "interval_seconds": 600})
+    client.put("/api/projects/proj_notes", json={**body, "schedule_enabled": True, "interval_seconds": 600})
     assert worker.schedule_tick(conn) == 0
     clock.advance(seconds=601)
     assert worker.schedule_tick(conn) == 1
     assert worker.schedule_tick(conn) == 0  # next_run_at 已前移，不會雙重 enqueue
     assert conn.execute("SELECT COUNT(*) FROM jobs WHERE type='run_project'").fetchone()[0] == 1
     # 改排程（同 interval）不會 enqueue，也不重置 next_run_at
-    nxt = conn.execute("SELECT next_run_at FROM projects WHERE id='proj_course'").fetchone()[0]
-    client.put("/api/projects/proj_course", json={**body, "schedule_enabled": True, "interval_seconds": 600, "name": "改名"})
-    assert conn.execute("SELECT next_run_at FROM projects WHERE id='proj_course'").fetchone()[0] == nxt
+    nxt = conn.execute("SELECT next_run_at FROM projects WHERE id='proj_notes'").fetchone()[0]
+    client.put("/api/projects/proj_notes", json={**body, "schedule_enabled": True, "interval_seconds": 600, "name": "改名"})
+    assert conn.execute("SELECT next_run_at FROM projects WHERE id='proj_notes'").fetchone()[0] == nxt
     assert conn.execute("SELECT COUNT(*) FROM jobs").fetchone()[0] == 1
     # Run Now 不需等排程；Idempotency-Key 去重
     h = {"Idempotency-Key": "rn-1"}
-    a = client.post("/api/projects/proj_course/run-now", headers=h).json()
-    b = client.post("/api/projects/proj_course/run-now", headers=h).json()
+    a = client.post("/api/projects/proj_notes/run-now", headers=h).json()
+    b = client.post("/api/projects/proj_notes/run-now", headers=h).json()
     assert a["job"]["id"] == b["job"]["id"]
     run_worker(conn)
-    assert conn.execute("SELECT COUNT(*) FROM runs WHERE project_id='proj_course'").fetchone()[0] == 2  # 一次排程 + 一次 run-now
+    assert conn.execute("SELECT COUNT(*) FROM runs WHERE project_id='proj_notes'").fetchone()[0] == 2  # 一次排程 + 一次 run-now
 
 
 def test_worker_singleton_heartbeat(conn):

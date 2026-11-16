@@ -29,7 +29,7 @@ def test_reserve_settle_release_idempotent(conn):
 def test_insufficient_units_rolls_back_whole_delivery(client, conn):
     conn.execute("INSERT INTO usage_ledger(id,operation_id,entry_type,units,category,created_at) VALUES('l_burn','burn','reserve',999,'x','2026-11-16T12:00:00Z')")
     assert ledger.balance(conn)["available"] < 2
-    client.post("/api/simulator/events", json={"event_id": "poor", "post_id": "own_rent_1", "author_handle": "demo_p", "text": "清單"})
+    client.post("/api/simulator/events", json={"event_id": "poor", "post_id": "own_toeic_1", "author_handle": "demo_p", "text": "清單"})
     from tests.conftest import run_worker
     run_worker(conn)
     assert conn.execute("SELECT COUNT(*) FROM delivery_attempts").fetchone()[0] == 0   # 沒有半成品 attempt
@@ -51,11 +51,11 @@ def test_status_codes(client):
     assert client.get("/api/projects/nope").status_code == 404
     assert client.post("/api/projects", json={"name": "x"}).status_code == 422
     assert client.post("/api/projects", json={"name": "x", "brand_id": "nope", "account_id": "acct_x", "keywords": ["a"]}).status_code == 404
-    assert client.post("/api/projects", json={"name": "x", "brand_id": "brand_rent", "account_id": "acct_x", "keywords": ["a"], "mode": "turbo"}).status_code == 422
-    assert client.post("/api/brands", json={"name": "安居台北租屋顧問（虛構）"}).status_code == 409
+    assert client.post("/api/projects", json={"name": "x", "brand_id": "brand_toeic", "account_id": "acct_x", "keywords": ["a"], "mode": "turbo"}).status_code == 422
+    assert client.post("/api/brands", json={"name": "刷題快手（MoreTi 多益）"}).status_code == 409
     assert client.post("/api/accounts", json={"platform": "x", "handle": "real_person", "display_name": "x"}).status_code == 422  # 只允許 demo_*
-    assert client.post("/api/accounts", json={"platform": "x", "handle": "demo_shiguang_x", "display_name": "dup"}).status_code == 409
-    assert client.post("/api/drafts", json={"project_id": "proj_rent", "post_id": "nope"}).status_code == 404
+    assert client.post("/api/accounts", json={"platform": "x", "handle": "demo_notes_x", "display_name": "dup"}).status_code == 409
+    assert client.post("/api/drafts", json={"project_id": "proj_toeic", "post_id": "nope"}).status_code == 404
     assert client.get("/api/analytics/summary?from=bad&to=worse").status_code == 400
 
 
@@ -110,27 +110,27 @@ def make_threads(handler):
 def test_threads_not_configured(conn, monkeypatch):
     monkeypatch.delenv("THREADS_ACCESS_TOKEN", raising=False)
     with pytest.raises(NotConfigured):
-        ThreadsReadonlyProvider().search_posts(conn, ["租屋"], "a", "b", "hot", 10)
+        ThreadsReadonlyProvider().search_posts(conn, ["多益"], "a", "b", "hot", 10)
 
 
 @pytest.mark.parametrize("code,msg", [(401, "401"), (403, "403"), (429, "429")])
 def test_threads_error_codes(conn, code, msg):
     p = make_threads(lambda req: httpx.Response(code, json={}))
     with pytest.raises(DependencyError) as e:
-        p.search_posts(conn, ["租屋"], "a", "b", "hot", 10)
+        p.search_posts(conn, ["多益"], "a", "b", "hot", 10)
     assert msg in e.value.message
 
 
 def test_threads_pagination_and_mapping(conn):
-    pages = {None: {"data": [{"id": "1", "text": "想找租屋", "username": "u1", "timestamp": "2026-11-15T10:00:00+0000"}], "paging": {"cursors": {"after": "C2"}}},
-             "C2": {"data": [{"id": "2", "text": "租屋推薦", "username": "u2", "timestamp": "2026-11-14T10:00:00+0000"}, {"id": "3", "username": "nt"}]}}
+    pages = {None: {"data": [{"id": "1", "text": "想找多益", "username": "u1", "timestamp": "2026-11-15T10:00:00+0000"}], "paging": {"cursors": {"after": "C2"}}},
+             "C2": {"data": [{"id": "2", "text": "多益推薦", "username": "u2", "timestamp": "2026-11-14T10:00:00+0000"}, {"id": "3", "username": "nt"}]}}
     seen = []
 
     def h(req):
         seen.append(dict(req.url.params))
         assert req.method == "GET"
         return httpx.Response(200, json=pages[req.url.params.get("after")])
-    out = make_threads(h).search_posts(conn, ["租屋"], "a", "b", "hot", 10)
+    out = make_threads(h).search_posts(conn, ["多益"], "a", "b", "hot", 10)
     assert [p["id"] for p in out] == ["threads_1", "threads_2"] and out[0]["created_at"] == "2026-11-15T10:00:00Z"
     assert seen[0]["search_type"] == "TOP" and seen[1]["after"] == "C2"
 
@@ -141,20 +141,20 @@ def test_threads_has_no_write_methods():
 
 def test_threads_unconfigured_does_not_block_demo(client):
     client.patch("/api/settings", json={"social_source": "threads_readonly"})
-    r = client.post("/api/projects/proj_rent/run-now?sync=true")
+    r = client.post("/api/projects/proj_toeic/run-now?sync=true")
     assert r.status_code == 503 and r.json()["error"]["code"] == "not_configured"
     client.patch("/api/settings", json={"social_source": "demo"})
-    assert client.post("/api/projects/proj_rent/run-now?sync=true").status_code == 202
+    assert client.post("/api/projects/proj_toeic/run-now?sync=true").status_code == 202
 
 
 # ---- seed / migration / eval ----
 def test_seed_counts_and_idempotent(conn):
     c = lambda t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-    assert c("source_posts") == 120 and c("comments") == 80 and c("brands") == 3 and c("social_accounts") == 4
+    assert c("source_posts") == 120 and c("comments") == 80 and c("brands") == 2 and c("social_accounts") == 4
     assert {r[0] for r in conn.execute("SELECT platform FROM social_accounts")} == {"threads", "x", "instagram", "facebook"}
-    conn.execute("UPDATE brands SET name='使用者改的' WHERE id='brand_rent'")
+    conn.execute("UPDATE brands SET name='使用者改的' WHERE id='brand_toeic'")
     seed.seed_demo(conn)
-    assert conn.execute("SELECT name FROM brands WHERE id='brand_rent'").fetchone()[0] == "使用者改的"   # 不覆蓋使用者修改
+    assert conn.execute("SELECT name FROM brands WHERE id='brand_toeic'").fetchone()[0] == "使用者改的"   # 不覆蓋使用者修改
     assert c("source_posts") == 120
 
 
@@ -218,11 +218,11 @@ def test_public_demo_blocks_non_sandbox_writes_and_rate_limits(db_path, monkeypa
     c = TestClient(create_app(db_path))
     assert c.get("/api/settings").json()["public_demo"] is True
     for method, path, body in [("post", "/api/brands", {"name": "x"}), ("patch", "/api/settings", {"ai_provider": "anthropic"}),
-                               ("post", "/api/links", {"label": "a", "destination": "http://127.0.0.1/x"}), ("delete", "/api/projects/proj_rent", None)]:
+                               ("post", "/api/links", {"label": "a", "destination": "http://127.0.0.1/x"}), ("delete", "/api/projects/proj_toeic", None)]:
         r = getattr(c, method)(path, **({"json": body} if body is not None else {}))
         assert r.status_code == 403 and r.json()["error"]["code"] == "public_demo_readonly", path
-    assert c.post("/api/projects/proj_rent/run-now?sync=true").status_code == 202   # 沙盒白名單
-    codes = [c.post("/api/simulator/events", json={"event_id": f"r{i}", "post_id": "own_rent_1", "author_handle": "demo_x", "text": "清單"}).status_code for i in range(70)]
+    assert c.post("/api/projects/proj_toeic/run-now?sync=true").status_code == 202   # 沙盒白名單
+    codes = [c.post("/api/simulator/events", json={"event_id": f"r{i}", "post_id": "own_toeic_1", "author_handle": "demo_x", "text": "清單"}).status_code for i in range(70)]
     assert 429 in codes and codes[0] == 202
 
 
