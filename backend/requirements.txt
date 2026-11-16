@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+anthropic
+pytest
+httpx
+playwright

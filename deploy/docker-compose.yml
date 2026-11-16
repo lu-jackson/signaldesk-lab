@@ -1,0 +1,20 @@
+# 公開展示站：Caddy 自動 HTTPS → app（容器內 8000，不對外開放）
+services:
+  app:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    restart: unless-stopped
+    environment:
+      SIGNALDESK_PUBLIC_DEMO: "1"
+      SIGNALDESK_RESET_HOURS: "6"
+      SIGNALDESK_ORIGINS: "https://signaldesk.moreti.app"
+      SIGNALDESK_BASE_URL: "https://signaldesk.moreti.app"
+      TRACKING_ALLOWED_HOSTS: "signaldesk.moreti.app,127.0.0.1,localhost"
+    volumes: ["appdata:/data"]
+    expose: ["8000"]
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data", "caddy_config:/config"]
+    depends_on: [app]
+volumes: { appdata: {}, caddy_data: {}, caddy_config: {} }
