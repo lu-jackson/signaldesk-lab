@@ -1,0 +1,26 @@
+# Render Blueprint：免費 Web Service（單一實例、無持久磁碟）。
+# 免費版閒置 15 分鐘會休眠，首次開啟可能要等約 1 分鐘；重啟後 SQLite 會重置（公開站本來就定期重置）。
+# 不要在這裡設定任何金鑰（ANTHROPIC_API_KEY、THREADS_ACCESS_TOKEN）。
+services:
+  - type: web
+    name: signaldesk-lab
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    numInstances: 1
+    autoDeploy: false
+    envVars:
+      - key: SIGNALDESK_PUBLIC_DEMO
+        value: "1"
+      - key: SIGNALDESK_RESET_HOURS
+        value: "6"
+      - key: SIGNALDESK_BASE_URL
+        value: https://signaldesk.moreti.app
+      - key: SIGNALDESK_ORIGINS
+        value: https://signaldesk.moreti.app,https://signaldesk-lab.onrender.com
+      - key: TRACKING_ALLOWED_HOSTS
+        value: signaldesk.moreti.app,signaldesk-lab.onrender.com,127.0.0.1,localhost
+      - key: PORT
+        value: "8000"

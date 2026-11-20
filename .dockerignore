@@ -4,3 +4,9 @@ frontend/dist
 data
 .env
 **/__pycache__
+
+CV&Cover letter
+SignalDesk_Lab_Claude_Code_Handoff
+*.db
+.git
+e2e/node_modules
