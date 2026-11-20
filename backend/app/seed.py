@@ -62,6 +62,15 @@ ACCOUNTS = [("acct_threads", "threads", "demo_toeic_tw", "刷題快手（Demo）
 PROJECTS = [
     ("proj_toeic", "多益備考需求追蹤", "brand_toeic", "acct_threads", "找出正在找多益刷題與模考方法的考生", ["多益", "TOEIC"], [], ["補習班", "【招生】", "歡迎洽詢"], "manual_review"),
     ("proj_notes", "經濟學筆記需求追蹤", "brand_notes", "acct_x", "找出在找經濟學複習筆記的學生", ["總體經濟", "貨幣銀行", "經濟學"], [], ["歡迎洽詢", "二手"], "auto_simulate"),
+    # 每本筆記一個專案（A2）：關鍵字取該科的專有名詞，避免「積分／統計」這類太泛的詞造成雜訊。全部走人工審核。
+    ("proj_notes_micro", "個體經濟筆記需求追蹤", "brand_notes", "acct_x", "找出在找個體經濟複習筆記的學生", ["個體經濟", "個經", "微觀經濟"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
+    ("proj_notes_calculus", "微積分筆記需求追蹤", "brand_notes", "acct_x", "找出在找微積分複習筆記的學生", ["微積分", "偏微分", "泰勒級數"], [], ["歡迎洽詢", "二手", "【出售】", "團購", "紅利", "點數"], "manual_review"),
+    ("proj_notes_linalg", "線性代數筆記需求追蹤", "brand_notes", "acct_x", "找出在找線性代數複習筆記的學生", ["線性代數", "特徵值", "奇異值分解"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
+    ("proj_notes_stats", "統計學筆記需求追蹤", "brand_notes", "acct_x", "找出在找統計學複習筆記的學生", ["統計學", "假設檢定", "迴歸分析"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
+    ("proj_notes_hs_english", "高中英文筆記需求追蹤", "brand_notes", "acct_x", "找出在找學測、指考英文複習資料的考生", ["學測英文", "指考英文", "高中英文", "字根字首"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
+    ("proj_notes_hs_math", "高中數學筆記需求追蹤", "brand_notes", "acct_x", "找出在找學測數學（數 A、數 B）複習筆記的考生", ["學測數學", "指考數學", "高中數學"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
+    ("proj_notes_civics", "高中公民筆記需求追蹤（免費書）", "brand_notes", "acct_x", "找出在找高中公民複習資料的考生；此書完全免費", ["高中公民", "學測公民"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
+    ("proj_notes_chinese", "高中國文筆記需求追蹤（免費書）", "brand_notes", "acct_x", "找出在找高中國文複習資料的考生；此書完全免費", ["高中國文", "學測國文"], [], ["歡迎洽詢", "二手", "【出售】", "團購"], "manual_review"),
 ]
 
 SCORES = ["600", "750", "800", "900"]
@@ -80,11 +89,15 @@ TOEIC = {
 }
 NOTES = {
     "seeking": ["想找總體經濟的複習筆記，期末快到了，有人推薦嗎？", "請問貨幣銀行學要怎麼整理重點？有沒有好讀的筆記？",
-                "經濟學原文書看不懂，想找中文整理的筆記，求推薦。", "有人知道哪裡有總體經濟的有聲複習資料嗎？通勤想聽。"],
-    "promotion": ["經濟學筆記團購優惠價，歡迎洽詢！", "【出售】二手經濟學課本，歡迎洽詢，加LINE。"],
-    "complaint": ["買到的經濟學筆記排版太爛，失望，不會再買。", "貨幣銀行學的教材太誇張，根本讀不懂，崩潰。"],
-    "advice": ["分享我讀總體經濟的心得：先搞懂 IS-LM 再看政策，給新手的經驗。", "給新手的注意事項：經濟學複習要先看圖表，這是我的經驗。"],
-    "resolved": ["總體經濟的筆記已經找到了，謝謝大家的建議！"],
+                "經濟學原文書看不懂，想找中文整理的筆記，求推薦。", "有人知道哪裡有總體經濟的有聲複習資料嗎？通勤想聽。",
+                "個體經濟的供需與彈性一直搞混，有沒有好讀的個體經濟筆記？", "微積分期末快到了，積分技巧看不懂，求推薦整理好的微積分筆記。",
+                "線性代數的特徵值和對角化完全聽不懂，有沒有人推薦線性代數筆記？", "統計學的假設檢定總是搞混，想找統計學重點整理，求推薦。",
+                "學測英文字根字首背不完，有沒有整理好的高中英文筆記？", "學測數學數 A 機率題一直錯，想找有歷屆題詳解的高中數學筆記。",
+                "高中公民要考學測了，有沒有免費的高中公民重點整理？", "高中國文成語老是記不起來，求推薦高中國文的複習筆記。"],
+    "promotion": ["經濟學筆記團購優惠價，歡迎洽詢！", "【出售】二手經濟學課本，歡迎洽詢，加LINE。", "微積分講義影印，團購優惠，歡迎洽詢。"],
+    "complaint": ["買到的經濟學筆記排版太爛，失望，不會再買。", "貨幣銀行學的教材太誇張，根本讀不懂，崩潰。", "統計學的課本寫得太爛，一堆符號看不懂，崩潰。"],
+    "advice": ["分享我讀總體經濟的心得：先搞懂 IS-LM 再看政策，給新手的經驗。", "給新手的注意事項：經濟學複習要先看圖表，這是我的經驗。", "分享我讀微積分的心得：先搞懂極限再看微分，給新手的經驗。"],
+    "resolved": ["總體經濟的筆記已經找到了，謝謝大家的建議！", "線性代數的筆記已經找到了，不用推薦了，謝謝大家！"],
 }
 UNRELATED = ["今天天氣真好，適合去河濱騎車。", "新手機的電池續航測試心得，三天一充。", "週末的電影票房真的好高，推薦大家去看。", "我家的貓咪今天又打翻水杯了。", "公司附近新開的拉麵店很好吃。", "最近在練習跑步，配速終於進步了。"]
 OWN_POSTS = [
@@ -113,7 +126,9 @@ def seed_demo(conn) -> dict:
             conn.execute("INSERT OR IGNORE INTO social_accounts(id,platform,handle,display_name,brand_id,created_at) VALUES(?,?,?,?,?,?)", (aid, plat, handle, dn, bid, ts_now))
         for pid, name, bid, aid, purpose, kw, must, exc, mode in PROJECTS:
             conn.execute("INSERT OR IGNORE INTO projects(id,name,brand_id,account_id,purpose,keywords,must_terms,exclude_terms,window_days,mode,daily_limit,created_at,updated_at) "
-                         "VALUES(?,?,?,?,?,?,?,?,7,?,3,?,?)", (pid, name, bid, aid, purpose, jdump(kw), jdump(must), jdump(exc), mode, ts_now, ts_now))
+                         "VALUES(?,?,?,?,?,?,?,?,?,?,3,?,?)", (pid, name, bid, aid, purpose, jdump(kw), jdump(must), jdump(exc),
+                                                   14 if pid.startswith("proj_notes_") else 7,  # 單本書的討論較少，時間窗放寬到 14 天
+                                                   mode, ts_now, ts_now))
 
         posts: list[tuple[str, str]] = []  # (text, platform)
         plat_cycle = ["threads", "x", "instagram", "facebook"]
@@ -122,16 +137,23 @@ def seed_demo(conn) -> dict:
                 (NOTES, {"seeking": 18, "promotion": 8, "complaint": 8, "advice": 8, "resolved": 6}, 48)]
         for bank, counts, total in plan:
             made = 0
+            seek_i = 0  # 電子筆記的「求助」句依序輪流取，確保每本書在展示資料裡都有貼文（其餘仍照 seed 隨機）
+
+            def pick(kind: str) -> str:
+                nonlocal seek_i
+                t = rng.choice(bank[kind])  # 照舊消耗 rng，讓其他類型的貼文不受影響
+                if bank is NOTES and kind == "seeking":
+                    t = bank[kind][seek_i % len(bank[kind])]
+                    seek_i += 1
+                return t.format(s=rng.choice(SCORES), p=rng.choice(PARTS))
             for kind, n in counts.items():
                 if kind == "_":
                     continue
                 for _ in range(n):
-                    t = rng.choice(bank[kind]).format(s=rng.choice(SCORES), p=rng.choice(PARTS))
-                    posts.append((t, rng.choice(plat_cycle)))
+                    posts.append((pick(kind), rng.choice(plat_cycle)))
                     made += 1
             while made < total:
-                t = rng.choice(bank["seeking"]).format(s=rng.choice(SCORES), p=rng.choice(PARTS))
-                posts.append((t, rng.choice(plat_cycle)))
+                posts.append((pick("seeking"), rng.choice(plat_cycle)))
                 made += 1
         for i in range(12):
             posts.append((UNRELATED[i % len(UNRELATED)], rng.choice(plat_cycle)))
