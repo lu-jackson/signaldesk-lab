@@ -83,10 +83,52 @@ def _bigrams(s: str) -> set[str]:
     return {s[i:i + 2] for i in range(len(s) - 1)}
 
 
+
+# 第二筆事實至少要有最相關那筆的這個比例分數才會附上；低於此值寧可少說，也不附不相關的資訊。
+SECOND_FACT_RATIO = 0.6
+# 最相關那筆至少要有約兩組「專有字組」吻合（如「微積分」＝兩組）才附事實；只撞到一個「適合」之類的字不算。
+MIN_FACT_SCORE = 1.2
+
+
+# 求助貼文與事實裡到處都有、不代表「哪一本書」的通用詞；計分時略過。
+GENERIC_TERMS = ("重點", "整理", "推薦", "複習", "筆記", "免費", "有沒有", "期末", "資料", "好讀", "考前", "求", "想找", "請問", "有人")
+
+
+def _content_grams(s: str) -> set[str]:
+    """略過通用詞，依標點與空白切段，再在每段內取相鄰兩字；避免「，適」這種跨標點的假字組。"""
+    for g in GENERIC_TERMS:
+        s = s.replace(g, " ")
+    out: set[str] = set()
+    for seg in re.split(r"[\W_]+", s):
+        out |= {seg[i:i + 2] for i in range(len(seg) - 1)}
+    return out
+
+
+def pick_facts(facts: list[str], post_text: str, limit: int = 2) -> list[str]:
+    """挑出與貼文最相關的事實（規則式 Demo 的相關度，不是語意理解）。
+
+    各本書的事實常有相同的套話（「買斷 NT$800，可先免費閱讀」），若只數共同字組，無關的書也會得分。
+    所以每個字組的權重是 1 / (出現在幾筆事實裡)²：只在單一事實出現的字（書名、專有名詞）權重最高，
+    每筆都有的套話幾乎不計分。最相關那筆分數不到 MIN_FACT_SCORE 就不附任何事實。
+    """
+    post_grams = _content_grams(post_text)
+    grams = [_content_grams(f) for f in facts]
+    df: dict[str, int] = {}
+    for g in grams:
+        for b in g:
+            df[b] = df.get(b, 0) + 1
+    scored = [(sum(1.0 / df[b] ** 2 for b in g & post_grams), i) for i, g in enumerate(grams)]
+    scored = [x for x in sorted(scored, key=lambda x: (-x[0], x[1])) if x[0] > 0]
+    if not scored or scored[0][0] < MIN_FACT_SCORE:
+        return []
+    top = scored[0][0]
+    return [facts[i] for sc, i in scored[:limit] if sc >= top * SECOND_FACT_RATIO or sc == top]
+
+
 def draft_text(post: dict, brand: dict, evaluation: dict) -> str:
     data = brand["data"]
     ptxt = _bigrams(post["text"])
-    facts = sorted(data.get("facts", []), key=lambda f: -len(_bigrams(f) & ptxt))[:2]
+    facts = pick_facts(data.get("facts", []), post["text"])
     faq_best = None
     best = 0
     for item in data.get("faq", []):
