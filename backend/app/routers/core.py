@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, Header
 from .. import clock, worker
 from ..db import rows
 from ..deps import get_conn, idem_header, idempotent
-from ..schemas import AccountIn, BrandIn, ProjectIn, SettingsPatch
-from ..services import catalog, drafts, jobs, ledger, pipeline, settings, tracking
+from ..schemas import AccountIn, BrandIn, PostImportIn, ProjectIn, SettingsPatch
+from ..services import catalog, drafts, imports, jobs, ledger, pipeline, settings, tracking
 
 r = APIRouter(prefix="/api")
 
@@ -111,6 +111,12 @@ def project_run_now(pid: str, sync: bool = False, idem: str | None = Depends(ide
         j = jobs.enqueue(conn, "run_project", {"project_id": pid, "trigger": "run_now"}, idempotency_key=f"run_now:{idem}" if idem else None)
         return {"mode": "queued", "job": j}
     return idempotent(conn, idem, f"run-now:{pid}:{sync}", go)
+
+
+@r.post("/posts/import", status_code=201)
+def post_import(body: PostImportIn, conn=Depends(get_conn)):
+    """手動貼上一則貼文並走完 納入→分類→草稿。不會自動送出；公開展示站會被沙盒規則擋下（403）。"""
+    return imports.import_post(conn, body)
 
 
 @r.get("/projects/{pid}/runs")

@@ -116,3 +116,28 @@ class AgentMessageIn(BaseModel):
 
 class SessionIn(BaseModel):
     title: str = "新會話"
+
+
+class PostImportIn(BaseModel):
+    """手動貼上一則「你自己看到的公開貼文」。作者帳號與網址都可留空；不要貼私訊或含個資的內容。"""
+    project_id: str
+    text: str = Field(min_length=1, max_length=1500)
+    platform: Platform = "threads"
+    author_handle: str = Field(default="", max_length=40)   # 第三方帳號名稱屬個資，預設留空
+    source_url: str = Field(default="", max_length=500)
+
+    @field_validator("source_url")
+    @classmethod
+    def _http_only(cls, v: str) -> str:
+        v = v.strip()
+        if v and not v.lower().startswith(("http://", "https://")):
+            raise ValueError("來源網址必須以 http:// 或 https:// 開頭")
+        return v
+
+    @field_validator("text")
+    @classmethod
+    def _strip_text(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("貼文內容不可為空白")
+        return v

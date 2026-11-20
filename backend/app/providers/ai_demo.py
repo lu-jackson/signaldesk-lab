@@ -135,7 +135,8 @@ def draft_text(post: dict, brand: dict, evaluation: dict) -> str:
         sc = len(_bigrams(item.get("q", "")) & ptxt)
         if sc > best:
             best, faq_best = sc, item
-    parts = [f"Hi {post['author_handle']}，看到你的貼文，我是{brand['name']}的小編。"]
+    handle = (post.get("author_handle") or "").strip()
+    parts = [(f"Hi {handle}，" if handle else "Hi，") + f"看到你的貼文，我是{brand['name']}的小編。"]
     if faq_best and best >= 2:
         parts.append(faq_best["a"])
     parts += [f"{f}" for f in facts]

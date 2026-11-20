@@ -11,11 +11,13 @@ import Analytics from "./pages/Analytics";
 import Jobs from "./pages/Jobs";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
+import Import from "./pages/Import";
 
 const ROUTES: [string, string, ComponentType][] = [
   ["dashboard", "儀表板", Dashboard],
   ["brands", "品牌與帳號", Brands],
   ["projects", "專案與搜尋", Projects],
+  ["import", "匯入貼文", Import],
   ["drafts", "草稿審核", Drafts],
   ["automations", "留言與私訊模擬", Automations],
   ["leads", "名單", Leads],
