@@ -29,3 +29,6 @@ python scripts/launcher.py e2e    # Playwright 瀏覽器 E2E
 
 ## 邊界（務必讀）
 Anthropic Live AI 與 Threads 唯讀 adapter 已實作並有 mock 測試，但**沒有對真實服務驗證**；僅 Windows 11 實測；單使用者、僅限 localhost，不可公開部署。詳見 KNOWN_LIMITATIONS。
+
+## 公開展示站
+線上展示：https://signaldesk.moreti.app（Render 免費版託管，唯讀沙盒、合成資料）。**閒置後首次開啟可能較慢（約 1 分鐘）**。部署說明見 [docs/DEPLOY.md](docs/DEPLOY.md)。
