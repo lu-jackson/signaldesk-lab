@@ -27,6 +27,12 @@ def db_path() -> str:
     return os.environ.get("SIGNALDESK_DB", str(ROOT / "data" / "signaldesk.db"))
 
 
+def synthetic_enabled() -> bool:
+    """是否在啟動時灌入合成貼文／留言／點擊。預設是（Demo 與公開展示站）；真實使用模式設 SIGNALDESK_SYNTHETIC=0，
+    只建立品牌、帳號、專案，資料庫裡就只會有你自己匯入的內容。"""
+    return os.environ.get("SIGNALDESK_SYNTHETIC", "1").strip().lower() not in ("0", "false", "no")
+
+
 def base_url() -> str:
     return os.environ.get("SIGNALDESK_BASE_URL", "http://127.0.0.1:8000")
 

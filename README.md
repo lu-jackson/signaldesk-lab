@@ -14,6 +14,7 @@ python scripts/launcher.py start     # 啟動 API + 單一 worker
 | 想做什麼 | 讀這個 |
 |---|---|
 | 安裝、啟動、環境變數 | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
+| **日常使用（匯入貼文、真實使用模式）** | [docs/LOCAL_USAGE.md](docs/LOCAL_USAGE.md) |
 | 10 分鐘 Demo | [docs/DEMO_WALKTHROUGH.md](docs/DEMO_WALKTHROUGH.md) |
 | **開始學習（先讀這個）** | [docs/LEARNING_GUIDE_ZH-TW.md](docs/LEARNING_GUIDE_ZH-TW.md)、[CODE_MAP](docs/CODE_MAP.md)、[DEBUGGING_EXAMPLES](docs/DEBUGGING_EXAMPLES.md) |
 | 架構／API／決策 | [ARCHITECTURE](docs/ARCHITECTURE.md)、[API](docs/API.md)、[DECISIONS](docs/DECISIONS.md) |

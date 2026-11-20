@@ -57,6 +57,7 @@ python scripts/launcher.py e2e    # Playwright（需先 build 前端；使用本
 |---|---|
 | `SIGNALDESK_DB` | DB 路徑（預設 `data/signaldesk.db`） |
 | `SIGNALDESK_PORT` | 啟動器的 API port（預設 8000） |
+| `SIGNALDESK_SYNTHETIC` | 設 `0` 則啟動時不灌合成貼文（真實使用模式，見 [LOCAL_USAGE](LOCAL_USAGE.md)；預設 `1`） |
 | `SIGNALDESK_BASE_URL` | 短連結顯示用 base URL |
 | `SIGNALDESK_ORIGINS` | 額外允許的寫入 Origin |
 | `TRACKING_ALLOWED_HOSTS` | 追蹤連結可指向的主機（預設 127.0.0.1,localhost） |

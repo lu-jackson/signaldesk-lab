@@ -9,7 +9,7 @@ from __future__ import annotations
 import random
 from datetime import timedelta
 
-from . import clock
+from . import clock, config
 from .db import jdump, tx
 from .services import leads, ledger, settings
 
@@ -131,6 +131,12 @@ def seed_demo(conn) -> dict:
                                                    14 if pid.startswith("proj_notes_") else 7,  # 單本書的討論較少，時間窗放寬到 14 天
                                                    mode, ts_now, ts_now))
 
+        if not config.synthetic_enabled():
+            # 真實使用模式：只建品牌／帳號／專案與基本設定，不灌任何合成貼文、留言、點擊、成效
+            leads.default_list_id(conn)
+            ledger.ensure_grant(conn)
+            return stats
+
         posts: list[tuple[str, str]] = []  # (text, platform)
         plat_cycle = ["threads", "x", "instagram", "facebook"]
         # 租屋 54 / 課程 24 / 蛋糕 24 / 無關 12 = 114；自有 6 → 120
@@ -219,6 +225,51 @@ def reset_demo(conn) -> None:
     seed_demo(conn)
 
 
+def _norm(data: dict) -> dict:
+    from .schemas import BrandData
+    return BrandData(**data).model_dump()
+
+
+def brand_upgrade_report(conn) -> list[dict]:
+    """比對資料庫裡品牌的「目前版本」與程式內 seed 的最新內容，列出差異（只讀，不改資料）。"""
+    from .db import jload
+    out = []
+    for bid, (name, data) in BRANDS.items():
+        b = conn.execute("SELECT current_version FROM brands WHERE id=?", (bid,)).fetchone()
+        if not b:
+            out.append({"brand_id": bid, "name": name, "status": "missing", "changes": []})
+            continue
+        cur = jload(conn.execute("SELECT data FROM brand_versions WHERE brand_id=? AND version=?", (bid, b["current_version"])).fetchone()["data"], {})
+        want, have = _norm(data), _norm(cur)
+        changes = []
+        for k, v in want.items():
+            if have.get(k) == v:
+                continue
+            if isinstance(v, list):
+                old = have.get(k) or []
+                key = (lambda x: x["q"]) if k == "faq" else (lambda x: x)
+                oldk, newk = {key(x) for x in old}, {key(x) for x in v}
+                changes.append({"field": k, "added": len(newk - oldk), "removed": len(oldk - newk), "kept": len(newk & oldk)})
+            else:
+                changes.append({"field": k, "from": str(have.get(k))[:40], "to": str(v)[:40]})
+        out.append({"brand_id": bid, "name": name, "version": b["current_version"], "status": "changed" if changes else "up_to_date", "changes": changes})
+    return out
+
+
+def upgrade_brands(conn) -> list[str]:
+    """把有差異的品牌升級成新版本（新增 version，舊版與引用舊版的草稿都保留；要退回可在介面沿用舊版內容）。"""
+    from .schemas import BrandData, BrandIn
+    from .services import catalog
+    done = []
+    for rep in brand_upgrade_report(conn):
+        if rep["status"] != "changed":
+            continue
+        name, data = BRANDS[rep["brand_id"]]
+        nb = catalog.update_brand(conn, rep["brand_id"], BrandIn(name=name, data=BrandData(**data)))
+        done.append(f"{name}：v{rep['version']} → v{nb['version']}")
+    return done
+
+
 def main() -> None:
     import argparse
 
@@ -226,9 +277,24 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="SignalDesk Lab seed / reset")
     ap.add_argument("--reset", action="store_true", help="清空 Demo DB 並重新 seed（破壞性）")
     ap.add_argument("--confirm", action="store_true", help="確認重設")
+    ap.add_argument("--upgrade-brands", action="store_true", help="預覽：資料庫裡的品牌與程式內最新品牌事實有哪些差異（不改資料）")
+    ap.add_argument("--apply", action="store_true", help="搭配 --upgrade-brands：確認升級（新增品牌版本，舊版保留）")
     a = ap.parse_args()
     conn = db.connect(config.db_path())
     db.migrate(conn)
+    if a.upgrade_brands:
+        seed_demo(conn)  # 先補缺的品牌／專案（不覆蓋任何既有內容）
+        for rep in brand_upgrade_report(conn):
+            tag = {"up_to_date": "已是最新", "changed": "有差異", "missing": "尚未建立"}[rep["status"]]
+            print(f"【{rep['name']}】{tag}" + (f"（目前 v{rep['version']}）" if "version" in rep else ""))
+            for c in rep["changes"]:
+                print("   ", f"{c['field']}：新增 {c['added']}、移除 {c['removed']}、保留 {c['kept']}" if "added" in c else f"{c['field']}：{c['from']} → {c['to']}")
+        if a.apply:
+            for line in upgrade_brands(conn) or ["沒有需要升級的品牌"]:
+                print("已升級：", line)
+        elif any(r["status"] == "changed" for r in brand_upgrade_report(conn)):
+            print("\n這只是預覽：品牌內容沒有改動（只會自動補上缺少的專案，不覆蓋任何既有內容）。確定要升級品牌請加上 --apply（會新增品牌版本，舊版保留）。")
+        return
     if a.reset:
         if not a.confirm:
             raise SystemExit(f"這會清空 {config.db_path()} 內所有資料（含你的修改）。確定的話加上 --confirm。")

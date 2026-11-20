@@ -11,6 +11,11 @@
 - [x] 回覆模板與禁語清單：不誇大、不保證成績、不貼他人著作；沿用既有的 prompt injection 防護。
 - [x] 公開資料與私人資料分開：個人 Email、學經歷認證等不放進 repo 或展示站。
 
+### 使用門檻（已完成）
+- [x] 本機日常使用手冊 [LOCAL_USAGE](LOCAL_USAGE.md) 與啟動腳本 `scripts/real.ps1`。
+- [x] 品牌升級：`real.ps1 upgrade`（預覽）／`upgrade-apply`（新增品牌版本，舊版保留）。
+- [x] 真實使用模式（`SIGNALDESK_SYNTHETIC=0`、獨立資料庫 `data/real.db`）：不灌合成資料，標示改為「本機資料庫（手動／CSV 匯入）」。
+
 ### B. 真實資料來源（取代合成貼文）
 - [ ] 評估合法來源：使用者自己帳號的官方 API（Threads 等，Live mode 才啟用、金鑰只放本機環境變數）、使用者手動匯入的 CSV／匯出檔、RSS／公開頁面（遵守 robots 與服務條款）。
 - [x] 實作「手動貼上」匯入（頁面「匯入貼文」、`POST /api/posts/import`）：貼上一則貼文 → 納入 → 分類 → 草稿，不自動送出、重複貼只存一份、公開展示站不開放。

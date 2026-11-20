@@ -49,7 +49,7 @@ def capabilities(conn) -> dict:
         "injection": {k: get(conn, k) for k in ("inject_public_reply", "inject_dm", "inject_draft_reply")},
         "labels": {
             "ai": "規則／模板（非 LLM）" if get(conn, "ai_provider") == "demo" else "Anthropic Live AI",
-            "social": "合成 Demo 資料" if get(conn, "social_source") == "demo" else "Threads 唯讀",
+            "social": ("合成 Demo 資料" if config.synthetic_enabled() else "本機資料庫（手動／CSV 匯入）") if get(conn, "social_source") == "demo" else "Threads 唯讀",
             "delivery": "僅本機模擬，不會送到任何真實平台",
         },
     }

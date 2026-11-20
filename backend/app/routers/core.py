@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Header
 
-from .. import clock, worker
+from .. import clock, config, worker
 from ..db import rows
 from ..deps import get_conn, idem_header, idempotent
 from ..schemas import AccountIn, BrandIn, CsvImportIn, PostImportIn, ProjectIn, SettingsPatch
@@ -152,7 +152,8 @@ def dashboard(conn=Depends(get_conn)):
     sent_7d = q("SELECT COUNT(*) FROM delivery_attempts WHERE created_at>=?", (since,))
     return {
         "updated_at": clock.now_iso(),
-        "period_note": "近 7 天 [now-7d, now)；所有資料皆為合成或本機模擬",
+        "period_note": ("近 7 天 [now-7d, now)；所有資料皆為合成或本機模擬" if config.synthetic_enabled()
+                        else "近 7 天 [now-7d, now)；資料為你手動／CSV 匯入的貼文，投遞皆為本機模擬（不會送到任何平台）"),
         "mode": settings.capabilities(conn),
         "worker": worker.worker_status(conn),
         "jobs": jobs.stats(conn),
