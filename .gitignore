@@ -15,3 +15,16 @@ e2e/output/
 test-results/
 playwright-report/
 .claude/
+
+# 個人／敏感資料：一律不進 git（本機專用）
+private/
+*.private.*
+CV&Cover letter/
+SignalDesk_Lab_Claude_Code_Handoff/
+ACTIVATION_PROMPT.txt
+CONTINUE_PROMPT.txt
+.env.*
+!.env.example
+*.pem
+*.key
+cert.pem

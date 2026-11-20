@@ -10,3 +10,6 @@ SignalDesk_Lab_Claude_Code_Handoff
 *.db
 .git
 e2e/node_modules
+private
+*.pem
+.env.*
