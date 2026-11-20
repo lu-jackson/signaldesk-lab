@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header
 from .. import clock, worker
 from ..db import rows
 from ..deps import get_conn, idem_header, idempotent
-from ..schemas import AccountIn, BrandIn, PostImportIn, ProjectIn, SettingsPatch
+from ..schemas import AccountIn, BrandIn, CsvImportIn, PostImportIn, ProjectIn, SettingsPatch
 from ..services import catalog, drafts, imports, jobs, ledger, pipeline, settings, tracking
 
 r = APIRouter(prefix="/api")
@@ -117,6 +117,12 @@ def project_run_now(pid: str, sync: bool = False, idem: str | None = Depends(ide
 def post_import(body: PostImportIn, conn=Depends(get_conn)):
     """手動貼上一則貼文並走完 納入→分類→草稿。不會自動送出；公開展示站會被沙盒規則擋下（403）。"""
     return imports.import_post(conn, body)
+
+
+@r.post("/posts/import-csv", status_code=201)
+def post_import_csv(body: CsvImportIn, conn=Depends(get_conn)):
+    """CSV 批次匯入（每次最多 50 列）：每列各自走 納入→分類→草稿，壞列回報不中斷。不自動送出；公開展示站 403。"""
+    return imports.import_csv(conn, body)
 
 
 @r.get("/projects/{pid}/runs")

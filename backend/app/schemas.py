@@ -141,3 +141,10 @@ class PostImportIn(BaseModel):
         if not v:
             raise ValueError("貼文內容不可為空白")
         return v
+
+
+class CsvImportIn(BaseModel):
+    """一次匯入多則貼文（CSV 文字）。每列各自驗證，壞列只會被略過並回報，不影響其他列。"""
+    project_id: str
+    csv_text: str = Field(min_length=1, max_length=300_000)
+    platform: Platform = "threads"   # CSV 沒有「平台」欄、或該列留空時使用
