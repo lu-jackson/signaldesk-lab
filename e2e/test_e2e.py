@@ -24,7 +24,7 @@ def test_flow1_brand_to_simulated_send(page):
     goto(page, "brands")
     name = f"E2E 多益品牌 {uuid.uuid4().hex[:4]}"
     page.get_by_test_id("brand-name").last.fill(name)
-    page.get_by_test_id("brand-facts").last.fill("E2E 可確認事實：我們提供看房陪同。")
+    page.get_by_test_id("brand-facts").last.fill("E2E 可確認事實：多益刷題提供錯題本與單字本。")
     page.get_by_test_id("brand-cta").last.fill("歡迎私訊。")
     page.get_by_test_id("brand-save").last.click()
     expect(page.get_by_text(name).first).to_be_visible()
@@ -56,6 +56,7 @@ def test_flow1_brand_to_simulated_send(page):
 
     # 5. 草稿：未核准不能送；核准 → 修改使核准失效 → 再核准 → 送出
     goto(page, "drafts")
+    # 事實要與貼文相關，草稿才會附上（A3 起不相關的事實不再硬附）
     first = page.locator("section.card").filter(has_text="E2E 可確認事實").first
     expect(first).to_be_visible()
     did = first.get_by_test_id(re.compile("draft-approve-")).get_attribute("data-testid").replace("draft-approve-", "")
@@ -179,3 +180,42 @@ def test_empty_and_error_states_are_visible(page):
     page.unroute("**/api/evaluations**")
     page.get_by_role("button", name="重試").click()
     expect(page.get_by_test_id("error")).to_have_count(0)
+
+
+def test_flow3_import_copy_and_record_manual_outcome(page):
+    """真實使用流程：匯入貼文 → 核准 → 複製 → 記錄「已貼到平台」→ 鎖定不可改 → 復原。全程不送出任何東西。"""
+    text = f"微積分期末快到了，積分技巧看不懂，求推薦整理好的微積分筆記。{uuid.uuid4().hex[:6]}"
+    goto(page, "import")
+    page.get_by_test_id("import-project").select_option(label="微積分筆記需求追蹤")
+    page.get_by_test_id("import-text").fill(text)
+    page.get_by_test_id("import-submit").click()
+    expect(page.get_by_test_id("import-draft")).to_be_visible()
+    expect(page.get_by_test_id("import-intent")).to_contain_text("seeking")
+
+    goto(page, "drafts")
+    card = page.locator("section.card").filter(has_text=text).first
+    expect(card).to_be_visible()
+    # 未核准：不能記錄為已貼到平台，但可以略過
+    posted = card.get_by_test_id(re.compile("draft-posted-"))
+    expect(posted).to_be_disabled()
+    card.get_by_test_id(re.compile("draft-approve-")).click()
+    expect(card.get_by_text("核准有效")).to_be_visible()
+    card.get_by_test_id(re.compile("draft-copy-")).click()
+    expect(card.get_by_test_id(re.compile("draft-copy-"))).to_contain_text("已複製")
+    card.get_by_test_id(re.compile("draft-note-")).fill("貼在 Threads")
+    card.get_by_test_id(re.compile("draft-posted-")).click()
+    handled = page.locator("section.card").filter(has_text=text).first
+    expect(handled.get_by_test_id(re.compile("draft-handling-"))).to_contain_text("已貼到平台")
+    expect(handled.get_by_test_id(re.compile("draft-handling-"))).to_contain_text("貼在 Threads")
+    # 已貼到平台：內容鎖定
+    expect(handled.get_by_test_id(re.compile("draft-body-"))).to_be_disabled()
+    # 篩選：已貼到平台可以找到
+    page.get_by_test_id("draft-handling-filter").select_option(label="已貼到平台")
+    expect(page.locator("section.card").filter(has_text=text).first).to_be_visible()
+    # 復原後又可編輯
+    page.locator("section.card").filter(has_text=text).first.get_by_test_id(re.compile("draft-undo-")).click()
+    page.get_by_test_id("draft-handling-filter").select_option(label="全部")
+    again = page.locator("section.card").filter(has_text=text).first
+    expect(again.get_by_test_id(re.compile("draft-body-"))).to_be_enabled()
+    # 整個流程沒有任何模擬投遞（只是人工記錄）
+    expect(again.get_by_test_id(re.compile("draft-delivery-"))).to_have_count(0)

@@ -22,18 +22,58 @@ def _out(conn, d: dict) -> dict:
     d["approval_valid"] = bool(ap and ap["content_hash"] == d["content_hash"] and d["status"] in ("approved", "sent"))
     att = conn.execute("SELECT id,status,error FROM delivery_attempts WHERE draft_id=? ORDER BY rowid DESC LIMIT 1", (d["id"],)).fetchone()
     d["delivery"] = dict(att) if att else None
+    d["manual_outcome"] = active_outcome(conn, d["id"])
     return d
 
 
+def active_outcome(conn, draft_id: str) -> dict | None:
+    o = conn.execute("SELECT id,outcome,note,body,created_at FROM manual_outcomes WHERE draft_id=? AND undone_at IS NULL ORDER BY rowid DESC LIMIT 1", (draft_id,)).fetchone()
+    return dict(o) if o else None
+
+
+def _assert_not_posted(conn, draft_id: str, what: str) -> None:
+    o = active_outcome(conn, draft_id)
+    if o and o["outcome"] == "posted":
+        raise Conflict(f"這則草稿已記錄為「已貼到平台」，不可{what}；若記錄錯了請先復原", "already_posted")
+
+
+def record_outcome(conn, draft_id: str, outcome: str, note: str = "") -> dict:
+    """記錄人工處理結果。posted 需要「核准有效」的草稿（和送出一樣的人工把關）；skipped 隨時可記。"""
+    d = get_draft(conn, draft_id)
+    if outcome == "posted" and not (d["approval_valid"] and d["status"] in ("approved", "sent")):
+        raise Conflict("草稿未核准，或核准已因修改／品牌更新而失效；請先核准再記錄「已貼到平台」", "approval_required")
+    ts = clock.now_iso()
+    with tx(conn):
+        conn.execute("UPDATE manual_outcomes SET undone_at=? WHERE draft_id=? AND undone_at IS NULL", (ts, draft_id))
+        conn.execute("INSERT INTO manual_outcomes(id,draft_id,outcome,note,body,content_hash,created_at) VALUES(?,?,?,?,?,?,?)",
+                     (new_id("mo"), draft_id, outcome, note.strip(), d["body"], d["content_hash"], ts))
+    return get_draft(conn, draft_id)
+
+
+def undo_outcome(conn, draft_id: str) -> dict:
+    get_draft(conn, draft_id)
+    with tx(conn):
+        conn.execute("UPDATE manual_outcomes SET undone_at=? WHERE draft_id=? AND undone_at IS NULL", (clock.now_iso(), draft_id))
+    return get_draft(conn, draft_id)
+
+
 def get_draft(conn, draft_id: str) -> dict:
-    r = row(conn.execute("SELECT d.*, p.text post_text, p.author_handle post_author FROM drafts d JOIN source_posts p ON p.id=d.post_id WHERE d.id=?", (draft_id,)).fetchone())
+    r = row(conn.execute("SELECT d.*, p.text post_text, p.author_handle post_author, p.source_url post_url, p.synthetic post_synthetic "
+                         "FROM drafts d JOIN source_posts p ON p.id=d.post_id WHERE d.id=?", (draft_id,)).fetchone())
     if not r:
         raise NotFound("找不到草稿")
     return _out(conn, r)
 
 
-def list_drafts(conn, *, status: str | None = None, project_id: str | None = None, page_no=1, size=30) -> dict:
+def list_drafts(conn, *, status: str | None = None, project_id: str | None = None, handling: str | None = None, page_no=1, size=30) -> dict:
     where, params = [], []
+    act = "EXISTS(SELECT 1 FROM manual_outcomes m WHERE m.draft_id=d.id AND m.undone_at IS NULL{})"
+    if handling == "pending":      # 還沒處理：沒有人工紀錄，且不是已拒絕
+        where.append("NOT " + act.format("") + " AND d.status<>'rejected'")
+    elif handling in ("posted", "skipped"):
+        where.append(act.format(f" AND m.outcome='{handling}'"))
+    elif handling:
+        raise DomainError("handling 只接受 pending、posted、skipped", "invalid_filter")
     if status:
         where.append("d.status=?")
         params.append(status)
@@ -42,7 +82,7 @@ def list_drafts(conn, *, status: str | None = None, project_id: str | None = Non
         params.append(project_id)
     w = ("WHERE " + " AND ".join(where)) if where else ""
     res = page(conn, f"FROM drafts d JOIN source_posts p ON p.id=d.post_id {w}", tuple(params), page_no, size, "d.created_at DESC, d.rowid DESC",
-               "d.*, p.text post_text, p.author_handle post_author")
+               "d.*, p.text post_text, p.author_handle post_author, p.source_url post_url, p.synthetic post_synthetic")
     res["items"] = [_out(conn, d) for d in res["items"]]
     return res
 
@@ -98,6 +138,7 @@ def edit_draft(conn, draft_id: str, body: str) -> dict:
     d = get_draft(conn, draft_id)
     if d["status"] == "sent":
         raise Conflict("已送出的草稿不可修改")
+    _assert_not_posted(conn, draft_id, "修改")
     ts = clock.now_iso()
     with tx(conn):
         conn.execute("UPDATE drafts SET body=?, content_hash=?, revision=revision+1, status='draft', updated_at=? WHERE id=?",
@@ -123,6 +164,7 @@ def reject(conn, draft_id: str) -> dict:
     d = get_draft(conn, draft_id)
     if d["status"] == "sent":
         raise Conflict("已送出的草稿不可拒絕")
+    _assert_not_posted(conn, draft_id, "拒絕")
     ts = clock.now_iso()
     with tx(conn):
         conn.execute("UPDATE drafts SET status='rejected', updated_at=? WHERE id=?", (ts, draft_id))
@@ -143,6 +185,7 @@ def regenerate(conn, draft_id: str) -> dict:
     d = get_draft(conn, draft_id)
     if d["status"] == "sent":
         raise Conflict("已送出的草稿不可重新生成")
+    _assert_not_posted(conn, draft_id, "重新生成")
     with tx(conn):
         conn.execute("UPDATE drafts SET status='rejected', updated_at=? WHERE id=?", (clock.now_iso(), draft_id))
         conn.execute("UPDATE approvals SET revoked_at=? WHERE draft_id=? AND revoked_at IS NULL", (clock.now_iso(), draft_id))

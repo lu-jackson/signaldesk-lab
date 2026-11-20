@@ -148,3 +148,9 @@ class CsvImportIn(BaseModel):
     project_id: str
     csv_text: str = Field(min_length=1, max_length=300_000)
     platform: Platform = "threads"   # CSV 沒有「平台」欄、或該列留空時使用
+
+
+class ManualOutcomeIn(BaseModel):
+    """你自己處理完一則草稿後的記錄：posted＝已貼到平台、skipped＝略過（可附原因）。"""
+    outcome: Literal["posted", "skipped"]
+    note: str = Field(default="", max_length=300)

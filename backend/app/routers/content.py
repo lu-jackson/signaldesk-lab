@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from ..deps import get_conn, idem_header, idempotent
-from ..schemas import DraftEdit, DraftGenerate
+from ..schemas import DraftEdit, DraftGenerate, ManualOutcomeIn
 from ..services import drafts, pipeline
 
 r = APIRouter(prefix="/api")
@@ -21,8 +21,8 @@ def evaluations(risk: str | None = None, intent: str | None = None, project_id: 
 
 
 @r.get("/drafts")
-def drafts_list(status: str | None = None, project_id: str | None = None, page: int = 1, page_size: int = 30, conn=Depends(get_conn)):
-    return drafts.list_drafts(conn, status=status, project_id=project_id, page_no=page, size=page_size)
+def drafts_list(status: str | None = None, project_id: str | None = None, handling: str | None = None, page: int = 1, page_size: int = 30, conn=Depends(get_conn)):
+    return drafts.list_drafts(conn, status=status, project_id=project_id, handling=handling, page_no=page, size=page_size)
 
 
 @r.post("/drafts", status_code=201)
@@ -53,6 +53,17 @@ def draft_reject(did: str, conn=Depends(get_conn)):
 @r.post("/drafts/{did}/regenerate", status_code=201)
 def draft_regenerate(did: str, conn=Depends(get_conn)):
     return drafts.regenerate(conn, did)
+
+
+@r.post("/drafts/{did}/manual-outcome")
+def draft_manual_outcome(did: str, body: ManualOutcomeIn, conn=Depends(get_conn)):
+    """記錄你自己處理的結果：posted＝已貼到平台、skipped＝略過。這只是記錄，不會替你送出任何東西。"""
+    return drafts.record_outcome(conn, did, body.outcome, body.note)
+
+
+@r.delete("/drafts/{did}/manual-outcome")
+def draft_manual_outcome_undo(did: str, conn=Depends(get_conn)):
+    return drafts.undo_outcome(conn, did)
 
 
 @r.post("/drafts/{did}/simulate-send")

@@ -43,6 +43,7 @@ def capabilities(conn) -> dict:
         "ai_provider": get(conn, "ai_provider"),
         "delivery_mode": get(conn, "delivery_mode"),
         "public_demo": config.public_demo(),
+        "synthetic": config.synthetic_enabled(),
         "anthropic_configured": bool(config.anthropic_key() and config.anthropic_model()),
         "anthropic_model": config.anthropic_model(),
         "threads_configured": bool(config.threads_token()),
